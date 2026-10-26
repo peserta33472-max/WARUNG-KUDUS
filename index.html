@@ -655,6 +655,10 @@
             <span id="summary-first-try" class="text-amber-600 font-black">0 / 5</span>
           </div>
           <div class="flex justify-between">
+            <span>Petunjuk Digunakan:</span>
+            <span id="summary-hints-used" class="text-slate-600 font-black">0 Kali</span>
+          </div>
+          <div class="flex justify-between">
             <span>Bonus Koin Diperoleh:</span>
             <span id="summary-coins-gained" class="text-amber-700 font-black">+0 Koin 🪙</span>
           </div>
@@ -1004,7 +1008,6 @@
     /* ==========================================================================
        CLOUD: LOGIN SISWA, ABSEN & SINKRONISASI KE GOOGLE SHEETS
        ========================================================================== */
-    // GANTI dengan URL Web App Apps Script Anda (lihat panduan). Kosong = mode lokal saja.
     const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbyW6p2UgfqZhHFKJQdCA7oKfEDO_4jG-vy01lOHgGz9spUnXdYhjF4c_jCxhLryYm_H/exec';
 
     const cloud = {
@@ -1248,7 +1251,6 @@
       { id: 'star',    slot: 'neck', name: 'Kalung Bintang',  price: 20, icon: '⭐' }
     ];
 
-    // Gambar SVG tiap aksesoris (viewBox 0 0 100 100, kepala berpusat di 50,50)
     const ACC_SVG = {
       bow: '<g transform="translate(68 15)"><path d="M0 0 L-13 -9 L-13 9 Z M0 0 L13 -9 L13 9 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" stroke-linejoin="round"/><circle r="4.5" fill="#b91c1c"/></g>',
       party: '<polygon points="50,4 36,26 64,26" fill="#8b5cf6" stroke="#6d28d9" stroke-width="1.5" stroke-linejoin="round"/><path d="M42 16 L58 20 M39 22 L61 26" stroke="#fde68a" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="5" r="4.5" fill="#fbbf24"/>',
@@ -1269,7 +1271,6 @@
         this.xpThresholds = [0, 30, 80, 160, 9999];
       }
 
-      // Rapikan data lama (versi makanan) agar cocok dengan versi aksesoris
       normalizePet() {
         const d = this.data;
         d.owned = Array.isArray(d.owned) ? d.owned.filter(id => ACCESSORIES.some(a => a.id === id)) : [];
@@ -1475,10 +1476,14 @@
           'Hore! 🌟', () => this.renderPetView());
       }
 
+      /* PERBAIKAN FUNGSI PILIH MASKOT */
       showSelectModal(fresh = true) {
         if (fresh) this.selectedTempType = this.data.type;
         const container = document.getElementById('pet-selection-cards');
         container.innerHTML = '';
+
+        const inputEl = document.getElementById('input-pet-name');
+        const currentInputValue = inputEl ? inputEl.value : '';
 
         Object.keys(PET_DEFINITIONS).forEach(key => {
           const pet = PET_DEFINITIONS[key];
@@ -1492,19 +1497,28 @@
             <span class="text-4xl">${pet.icon}</span>
             <span class="text-sm font-black text-slate-800">${pet.name}</span>
           `;
-          card.onclick = () => {
+          card.addEventListener('click', (e) => {
+            e.preventDefault();
             this.selectedTempType = key;
             this.showSelectModal(false);
-          };
+          });
           container.appendChild(card);
         });
 
-        if (fresh) document.getElementById('input-pet-name').value = this.data.name || PET_DEFINITIONS[this.selectedTempType].defaultName;
+        if (fresh) {
+          document.getElementById('input-pet-name').value = this.data.name || PET_DEFINITIONS[this.selectedTempType].defaultName;
+        } else if (currentInputValue) {
+          document.getElementById('input-pet-name').value = currentInputValue;
+        }
+
         document.getElementById('select-pet-modal').classList.remove('hidden');
       }
 
+      /* PERBAIKAN FUNGSI SIMPAN MASKOT */
       savePetSelection() {
-        const inputName = document.getElementById('input-pet-name').value.trim();
+        const inputEl = document.getElementById('input-pet-name');
+        const inputName = inputEl ? inputEl.value.trim() : '';
+        
         this.data.type = this.selectedTempType;
         this.data.name = inputName || PET_DEFINITIONS[this.selectedTempType].defaultName;
         this.saveData();
@@ -1566,7 +1580,7 @@
 
         this.data.coins -= acc.price;
         this.data.owned.push(accId);
-        this.data.equipped[acc.slot] = accId; // langsung dipakai
+        this.data.equipped[acc.slot] = accId;
         this.saveData();
         audio.playCorrect();
         this.showToast(acc.icon, `${this.data.name} memakai ${acc.name}!`);
