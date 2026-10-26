@@ -1475,8 +1475,8 @@
           'Hore! 🌟', () => this.renderPetView());
       }
 
-      showSelectModal() {
-        this.selectedTempType = this.data.type;
+      showSelectModal(fresh = true) {
+        if (fresh) this.selectedTempType = this.data.type;
         const container = document.getElementById('pet-selection-cards');
         container.innerHTML = '';
 
@@ -1494,12 +1494,12 @@
           `;
           card.onclick = () => {
             this.selectedTempType = key;
-            this.showSelectModal();
+            this.showSelectModal(false);
           };
           container.appendChild(card);
         });
 
-        document.getElementById('input-pet-name').value = this.data.name || PET_DEFINITIONS[this.selectedTempType].defaultName;
+        if (fresh) document.getElementById('input-pet-name').value = this.data.name || PET_DEFINITIONS[this.selectedTempType].defaultName;
         document.getElementById('select-pet-modal').classList.remove('hidden');
       }
 
